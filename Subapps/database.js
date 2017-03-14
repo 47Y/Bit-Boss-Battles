@@ -21,25 +21,25 @@ function ConnectWithRetry() {
 
 // DB Events
 db.on('error', function(err) {
-	
+
 	if (err) console.log("Database error: " + err);
 });
 db.on('open', function (callback) {
-	
+
 	console.log("Database connected.");
 });
 db.on('reconnected', function (callback) {
-	
+
 	console.log("Database reconnected.");
 });
 db.on('disconnected', function (callback) {
-	
+
 	console.log("Database disconnected.");
 });
 
 // Database Schemas
 var settingsSchema = {
-    
+
     sound: Boolean,
 	trans: Boolean,
 	chroma: Boolean,
@@ -59,7 +59,7 @@ var settingsSchema = {
 }
 
 var userSchema = mongoose.Schema({
-    
+
 	userid: String,
     partner: Boolean,
 	settings: settingsSchema
@@ -75,7 +75,7 @@ ConnectWithRetry();
 console.log("Database connecting. URI: " + mongoUri);
 
 module.exports = {
-		
+
 	Database: db,
 	User: User
 };

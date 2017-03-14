@@ -13,4 +13,4 @@ var damage = [
     new Audio("./sound/damage3.ogg")
 ];
 
-var explosion = new Audio("./sound/explosion1.ogg");
+var explosion = null; // Set the sound to null. Change it later

@@ -6,6 +6,7 @@
         <link href="./stylesheets/spectrum.css" rel="stylesheet">
         <link href="./stylesheets/common.css" rel="stylesheet">
         <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/3.7.1/firebase.js"></script>
         <script src="./javascripts/spectrum.js"></script>
         <script src="./javascripts/info.js"></script>
         <script src="./javascripts/cookies.js"></script>
@@ -95,7 +96,7 @@
                 <p class="indent hidden" id="expl-progress">In Progressive Mode, the first Bit Boss starts with an initial amount of HP, and each successive boss afterward has an incrementally higher HP value.</p>
                 <p class="indent hidden" id="expl-constant">In Constant Mode, each Bit Boss will always have the same amount of starting HP.</p>
                 <p><span style="color: red;">NOTE:</span> Changing HP modes resets the current boss and their HP.</p>
-                <h3>Theme Settings</h3><br>
+                <hr><h3>Theme Settings</h3><br>
                 <table id="colortable">
                     <tr style="border: 0;">
                         <td class="setting rightpad">Background:</td>
@@ -119,6 +120,15 @@
                     </tr>
                 </table>
                 <button id="colorreset" style="width: 147px;">Reset Theme</button>
+                <hr><h3>Kill Sound Settings</h3><br>
+                <table>
+                  <tr style="border: 0;">
+                      <td class="setting"><input type="file" id="killSound"></td>
+                  </tr>
+                  <tr style="border: 0;">
+                      <td class="setting"><input type="button" id="setKillSound" value="Set Boss Kill Sound" stype="width: 150px"></td>
+                  </tr>
+                </table>
             </div>
         </div>
     </body>

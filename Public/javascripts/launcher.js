@@ -1,12 +1,12 @@
 $(document).ready(function() {
-    
+
     parseCookies();
-    
+
     if (getCookie("auth", "") != "")
     {
         InitialSettingsSave();
     }
-    
+
     var authWait = setInterval(function() {
 
         parseCookies();
@@ -14,17 +14,17 @@ $(document).ready(function() {
         if (getCookie("auth", "") != "" && getCookie("authchange", "false") == "true")
         {
             setCookie("authchange", "false");
-            
+
             InitialSettingsSave();
         }
     }, 250);
-    
+
     var appWindow = null;
-    
+
     function InitialSettingsSave() {
-        
+
         $("#launch").prop("disabled", false);
-        $("#link").html("http://bitbossbattles.herokuapp.com/app.html?userid=" + getCookie("userid", "") + "&token=" + getCookie("auth", "") + "&rev=" + rev);
+        $("#link").html("http://bitbosstest.herokuapp.com/app.html?userid=" + getCookie("userid", "") + "&token=" + getCookie("auth", "") + "&rev=" + rev);
 
         $.ajax({
             url: "https://api.twitch.tv/kraken/user",
@@ -39,6 +39,8 @@ $(document).ready(function() {
 
                 userId = data._id;
                 setCookie("userid", userId);
+                $("#link").html("http://bitbosstest.herokuapp.com/app.html?userid=" + getCookie("userid", "") + "&token=" + getCookie("auth", "") + "&rev=" + rev);
+                // Updates the link once the userid has actually been retrieved. If it's the first time there is no cookie and wouldn't be set before.
 
                 var settings = {
                     overwrite: false,
@@ -90,7 +92,7 @@ $(document).ready(function() {
         $("#launch").prop("disabled", true);
         $("#link").html("<span style='color: red;'>App not yet authorized. Authorize the app to get a link.</span>");
     }
-    
+
     $("#auth").click(LaunchAuth);
     $("#force").click(LaunchForce);
     $("#launch").click(LaunchApp);

@@ -1,11 +1,11 @@
 $(document).ready(function () {
-    
+
     // Demo Mode
     var demoMode = false;
-    
+
     // Channel ID
     var channelId = "";
-    
+
     // Settings
     var sound = false;
 
@@ -26,7 +26,7 @@ $(document).ready(function () {
     var lossShowing = false;
     var refill = false;
     var preload = true;
-    
+
     // Name scroll
     var scrollInterval = 5000;
     var resetInterval = 1000;
@@ -50,10 +50,10 @@ $(document).ready(function () {
     var health = $("#health");
     var hitdelay = $("#hitdelay");
     var counter = $("#hp");
-    var avatarimg = $("#avatar");    
-    
+    var avatarimg = $("#avatar");
+
     // Bits gifs
-    
+
     // 1 bit
     var bits1 = [
         "http://i.imgur.com/axWaf1G.gif",
@@ -61,7 +61,7 @@ $(document).ready(function () {
         "http://i.imgur.com/T2RFqm3.gif",
         "http://i.imgur.com/bIUYT4E.gif"
     ];
-    
+
     // 100 bits
     var bits100 = [
         "http://i.imgur.com/qIGLfo8.gif",
@@ -69,7 +69,7 @@ $(document).ready(function () {
         "http://i.imgur.com/ueYVt9V.gif",
         "http://i.imgur.com/p8Wxr0m.gif"
     ];
-    
+
     // 1000 bits
     var bits1000 = [
         "http://i.imgur.com/TQPP9xT.gif",
@@ -77,7 +77,7 @@ $(document).ready(function () {
         "http://i.imgur.com/QRI0GE5.gif",
         "http://i.imgur.com/JpuqYpk.gif"
     ];
-    
+
     // 5000 bits
     var bits5000 = [
         "http://i.imgur.com/A6EIUy1.gif",
@@ -85,7 +85,7 @@ $(document).ready(function () {
         "http://i.imgur.com/DBjwiB3.gif",
         "http://i.imgur.com/Btlkt1D.gif"
     ];
-    
+
     // 10000 bits
     var bits10000 = [
         "http://i.imgur.com/koNnePN.gif",
@@ -93,48 +93,103 @@ $(document).ready(function () {
         "http://i.imgur.com/f8aQMPt.gif",
         "http://i.imgur.com/LCYgixP.gif"
     ];
-    
+
     // Heal
     var heal = "http://i.imgur.com/fOvRfRk.gif";
-    
+
     parseCookies();
-    
+
     sound = (getCookie("sound", "") == "true");
-    
+
     window.addEventListener("message", RefreshSettings, false);
-    
+
     function RefreshSettings(event) {
-        
+
         if (event.data == "refreshsettings") { parseCookies(); sound = (getCookie("sound", "") == "true"); }
     }
-    
+
     nextBoss = "nifty255";
     GetNewBoss();
-    
+
+    if (sound) {
+        var soundAuth = getCookie("userid", "default") // Will always be default if run from OBS. The userid cookie is not stored there.
+        if (explosion == null) { // If the sound hasn't been set yet
+          var config = {
+            apiKey: "AIzaSyAsKYzNaTY_RrQMwaratT1uqPDIxUWRurg",
+            authDomain: "bit-boss-fork.firebaseapp.com",
+            databaseURL: "https://bit-boss-fork.firebaseio.com",
+            storageBucket: "bit-boss-fork.appspot.com",
+            messagingSenderId: "493304297502"
+          };
+         firebase.initializeApp(config);
+
+         var storageRef = firebase.storage();
+         var soundRef = storageRef.refFromURL('gs://bit-boss-fork.appspot.com/sounds/' + (soundAuth || "default") + '.ogg');
+
+         soundRef.getDownloadURL().then(function(url) { // url is the actual download link
+          var xhr = new XMLHttpRequest();
+          xhr.responseType = 'blob';
+
+          xhr.onload = function(event) {
+            var blob = xhr.response;
+            explosion = new Audio(URL.createObjectURL(blob)); // set explosion to to 'userid'.ogg or default.ogg
+            firebase.storage().app.delete();
+          };
+          xhr.open('GET', url);
+          xhr.send();
+        }).catch(function(error) {
+          firebase.storage().app.delete();
+
+          switch (error.code) {
+            case 'storage/object_not_found':
+              console.log('File doesn\'t exist')
+
+              break;
+
+            case 'storage/unauthorized':
+              console.log('User doesn\'t have permission to access the object')
+              break;
+
+            case 'storage/canceled':
+              console.log('User canceled the upload')
+              break;
+
+            case 'storage/unknown':
+              console.log('Unknown error occurred, inspect the server response')
+              break;
+
+            default:
+              console.log('Default error: ' + error);
+              break;
+          }
+        });
+      }
+    }
+
     function InterpretData(message)
     {
         if (!message) { return; }
         if (!message.user_name) { return; }
         if (!message.bits_used) { return; }
         if (!message.context) { return; }
-        
+
         if (nextBoss == "")
         {
             GetUserInfo(message.user_name, function(info) {
-                
+
                 $("#attackerdisplay").css({
-                    
+
                     "opacity": "0"
                 });
-                
+
                 var amount = "";
-                
+
                 if (message.bits_used < 100) { amount = "1"; }
                 else if (message.bits_used < 1000) { amount = "100"; }
                 else if (message.bits_used < 5000) { amount = "1000"; }
                 else if (message.bits_used < 10000) { amount = "5000"; }
                 else { amount = "10000"; }
-                
+
                 if (info.displayName == $("#name").html())
                 {
                     $("#attackerdisplay").html("<img id='cheerimg' src='https://d3aqoihi2n8ty8.cloudfront.net/actions/" + message.context + "/light/animated/" + amount + "/1.gif?a=" + Math.random() + "'>" + info.displayName + " heals!");
@@ -154,14 +209,14 @@ $(document).ready(function () {
             });
         }
     }
-    
+
     function Heal(amount, healer, display) {
-        
+
         if (nextBoss == "")
         {
             $("#strikeimg").remove();
             if (imgRemove != null) { clearTimeout(imgRemove); }
-            
+
             loss -= amount;
             setCookie("currentHp", Math.min(hp - loss, maxHp).toString());
 
@@ -176,7 +231,7 @@ $(document).ready(function () {
     }
 
     function Strike(amount, attacker, display) {
-        
+
         if (nextBoss == "")
         {
             var imgToUse = "";
@@ -201,7 +256,7 @@ $(document).ready(function () {
             {
                 imgToUse = bits10000[GetRandomInt(0, bits10000.length - 1)];
             }
-            
+
             if (sound) { hits[GetRandomInt(0, hits.length - 1)].play(); }
 
             $("#strikeimg").remove();
@@ -214,12 +269,12 @@ $(document).ready(function () {
             {
                 overkill = loss - hp;
                 prevHp = 0;
-                
+
                 console.log("Overkill: " + overkill.toString());
-                
+
                 nextBoss = attacker;
                 counter.html("Final Blow: " + display);
-                
+
                 setCookie("currentBoss", nextBoss);
                 setCookie("currentHp", maxHp.toString());
             }
@@ -237,17 +292,17 @@ $(document).ready(function () {
             frstDelay = setTimeout(RunHpCalc, 1000);
         }
     }
-    
+
     function RunHpCalc() {
-        
+
         hp = Math.min(Math.max(0, hp - loss), maxHp);
-        
+
         if (loss == 0) { return; }
         else if (loss > 0)
         {
             health.css("width", ((hp / maxHp) * 100).toString() + "%");
             if (sound) { damage[GetRandomInt(0, damage.length - 1)].play(); }
-            
+
             lossOffset = 20;
             lossShowing = true;
             $("#loss").html("-" + loss.toString());
@@ -258,18 +313,18 @@ $(document).ready(function () {
                 "transform": "translateY(" + lossOffset.toString() + "px)",
                 "visibility": "visible"
             });
-            
+
             if (hitShStop != null) { clearTimeout(hitShStop); }
             if (shakeStop != null) { clearTimeout(shakeStop); }
-            
+
             shaking = true;
             shakeIntensity = 1000;
-            
+
             animDelay = setTimeout(function() {
 
                 isDelayed = false;
             }, 1000);
-            
+
             shakeStop = setTimeout(function() {
 
                 shaking = false;
@@ -280,7 +335,7 @@ $(document).ready(function () {
                     "transform": "translate(0px,0px)"
                 });
             }, 1000);
-            
+
             loss = 0;
         }
         else if (loss < 0)
@@ -295,18 +350,18 @@ $(document).ready(function () {
                 "transform": "translateY(" + lossOffset.toString() + "px)",
                 "visibility": "visible"
             });
-            
+
             if (hp < delayed)
             {
                 health.css("width", ((hp / maxHp) * 100).toString() + "%");
             }
-            
+
             avatarimg.after('<img id="strikeimg" src="' + heal + '?a=' + Math.random() + '"/>');
             imgRemove = setTimeout(function() { $("#strikeimg").remove(); }, 1000);
-            
+
             if (hitShStop != null) { clearTimeout(hitShStop); }
             if (shakeStop != null) { clearTimeout(shakeStop); }
-            
+
             shaking = false;
             avatarimg.css({
 
@@ -314,12 +369,12 @@ $(document).ready(function () {
                 "-ms-transform": "translate(0px,0px)",
                 "transform": "translate(0px,0px)"
             });
-            
+
             animDelay = setTimeout(function() {
 
                 isDelayed = false;
             }, 1000);
-            
+
             loss = 0;
         }
     }
@@ -327,9 +382,9 @@ $(document).ready(function () {
     function Explode() {
 
         preload = true;
-        
+
         if (sound) { explosion.play(); }
-        
+
         avatarimg.after('<img id="explodeimg" src="http://i.imgur.com/m9Ajapt.gif?a='+Math.random()+'"/>');
         avatarimg.animate({opacity: 0}, 1000, "linear", function() {
 
@@ -354,44 +409,44 @@ $(document).ready(function () {
     }
 
     function GetNewBoss() {
-        
+
         if (nextBoss == "") { return; }
-        
+
         GetUserInfo(nextBoss, function(info) {
-            
+
             if (info.logo == null) { avatarimg.attr("src", "https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png"); }
             else { avatarimg.attr("src", info.logo); }
             avatarimg.on('load', function() {
-                
+
                 $("#name").html(info.displayName);
                 $("#test").html(info.displayName);
-                
+
                 $("#name").stop().css("margin-left", "0px");
-                
+
                 if (scrollDelay != null && scrollDelay != -1) { clearTimeout(scrollDelay); scrollDelay = null; }
                 if (resetDelay != null) { clearTimeout(resetDelay); resetDelay = null; }
-                
+
                 refill = true;
                 preload = false;
 
                 hitdelay.css({
                     "visibility": "hidden"
                 });
-                
+
                 avatarimg.css("opacity", "0");
                 avatarimg.animate({ opacity: 1 }, 1000, "linear");
                 avatarimg.off('load');
             });
         });
     }
-    
+
     function GetUserInfo(username, callback) {
-        
+
         if (username == "") { return; }
         if (!callback) { return; }
 
         $.get("https://api.twitch.tv/kraken/users/" + username + "?client_id=" + clientId, function(response) {
-            
+
             callback({ displayName: response.display_name, logo: response.logo });
         });
     }
@@ -402,7 +457,7 @@ $(document).ready(function () {
     }
 
     function GetUrlParameter(sParam) {
-        
+
         var sPageURL = decodeURIComponent(window.location.search.substring(1)),
             sURLVariables = sPageURL.split('&'),
             sParameterName,
@@ -416,7 +471,7 @@ $(document).ready(function () {
             }
         }
     }
-    
+
     // Animation loop
     setInterval(function() {
 
@@ -486,23 +541,23 @@ $(document).ready(function () {
                 $("#loss").css("visibility", "hidden");
             }, 500);
         }
-        
+
         var nameWidth = $("#test").width();
         var scrollWidth = $("#scroll").width();
-        
+
         if (nameWidth > scrollWidth)
         {
             if (scrollDelay == null)
             {
                 console.log("Test")
                 scrollDelay = setTimeout(function() {
-                    
+
                     scrollDelay = -1;
-                    
+
                     $("#name").stop().animate({"marginLeft": "-" + (nameWidth - scrollWidth).toString() + "px"}, 1000, "linear", function() {
-                        
+
                         resetDelay = setTimeout(function() {
-                            
+
                             $("#name").css("margin-left", "0px");
                             scrollDelay = null;
                         }, resetInterval);
